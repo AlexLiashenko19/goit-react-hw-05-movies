@@ -1,65 +1,40 @@
 import Form from 'components/Form/Form';
 import { Loader } from 'components/Loader/Loader';
 import EditorList from 'pages/EditorList/EditorList';
-import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { fetchSearchByKeyword } from 'services/Api';
 
 const Movie = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchFilms, setSearchFilms] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [noMoviesText, setNoMoviesText] = useState(false);
-  const [query, setQuery] = useState('');
-
-  const searchMovies = useCallback(
-    queryMovie => {
-      fetchSearchByKeyword(queryMovie)
-        .then(searchResult => {
-          setSearchFilms(searchResult);
-          setNoMoviesText(searchResult.length === 0);
-          navigate(
-            queryMovie
-              ? `/movies?query=${encodeURIComponent(queryMovie)}`
-              : '/movies'
-          );
-        })
-        .catch(error => {
-          console.log(error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    },
-    [navigate]
-  );
+  const query = searchParams.get('query');
 
   useEffect(() => {
-    const queryMovie = new URLSearchParams(location.search).get('query');
-    if (!queryMovie) {
-      return;
-    }
-    if (queryMovie) {
-      setQuery(queryMovie);
-    }
-    searchMovies(queryMovie);
-  }, [location.search, searchMovies]);
-
-  useEffect(() => {
-    if (location.pathname === '/movies') {
-      const queryMovie = new URLSearchParams(location.search).get('query');
-      if (!queryMovie) {
-        setSearchFilms([]);
+    if (!query) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const fetchSearch = await fetchSearchByKeyword(query);
+        setSearchFilms(fetchSearch);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [location.pathname, location.search]);
+    })();
+  }, [query]);
+
+  const searchMovies = query => {
+    setSearchParams({ query });
+  };
 
   return (
     <main>
-      <Form searchMovies={searchMovies} query={query} />
+      <Form searchMovies={searchMovies} />
       {loading && <Loader />}
-      {noMoviesText && (
+      {searchFilms.length === 0 && (
         <p>THERE IS NO MOVIES WITH THIS REQUEST. PLEASE, TRY AGAIN!</p>
       )}
       {searchFilms && <EditorList films={searchFilms} />}

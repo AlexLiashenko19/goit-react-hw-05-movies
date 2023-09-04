@@ -1,21 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, SearchForm } from './Form.style';
+import { Button, Input, SearchForm } from './Form.styled';
 
-const Form = ({ searchMovie, query }) => {
+const Form = ({ searchMovies }) => {
   const [inputQuery, setInputQuery] = useState('');
-
-  useEffect(() => {
-    setInputQuery(query);
-  }, [query]);
 
   const handleInputChange = event => {
     setInputQuery(event.target.value);
   };
 
   const handleSubmit = e => {
-    e.prevenrDefault();
-    searchMovie(inputQuery.toLocaleLowerCase());
+    e.preventDefault();
+    searchMovies(e.target.query.value.toLowerCase().trim());
   };
   return (
     <SearchForm onSubmit={handleSubmit}>
@@ -33,7 +29,6 @@ const Form = ({ searchMovie, query }) => {
 
 Form.propTypes = {
   searchMovies: PropTypes.func.isRequired,
-  query: PropTypes.string.isRequired,
 };
 
 export default Form;
